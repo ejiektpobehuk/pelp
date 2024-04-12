@@ -37,6 +37,7 @@ impl Presentation {
             .arg("--to=revealjs")
             .arg("--slide-level=2")
             //.arg("--css=um.css")
+            .arg("--embed-resources")
             .arg("--standalone")
             .arg(format!("--output={}", &self.target_html.display()))
             .arg(&self.source_md)
