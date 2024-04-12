@@ -45,11 +45,21 @@ impl Presentation {
             .expect("Failed to build");
 
         if build.status.success() {
-            println!("{:?} successfully build into {:?}", &self.source_md, &self.target_html);
+            println!(
+                "{:?} successfully build into {:?}",
+                &self.source_md, &self.target_html
+            );
             Ok(())
         } else {
-            eprintln!("Failed to build {:?}. Pandoc error:\n{}", &self.source_md, String::from_utf8(build.stderr).unwrap());
-            Err(std::io::Error::new(std::io::ErrorKind::Other, "Failed to build"))
+            eprintln!(
+                "Failed to build {:?}. Pandoc error:\n{}",
+                &self.source_md,
+                String::from_utf8(build.stderr).unwrap()
+            );
+            Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to build",
+            ))
         }
     }
 

@@ -1,16 +1,18 @@
 mod presentation;
 use presentation::Presentation;
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Command, CommandFactory, Parser, Subcommand, ValueHint};
+use clap_complete::{generate, Generator, Shell};
 use std::ffi::OsStr;
 use std::fs;
+use std::io;
 use std::path::PathBuf;
 
 /// (P)resentation h(elp)er that makes recurring presentations a breeze.
 /// Automates conversion of Markdown to revealjs html.
 /// Deals with templating and files creation.
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(version, about, long_about = None, name = "completion-derive")]
 struct Cli {
     /// Markdown source file
     #[arg(short, long)]
@@ -22,17 +24,23 @@ struct Cli {
 
     #[command(subcommand)]
     command: Option<Commands>,
+
+    // If provided, outputs the completion file for given shell
+    #[arg(long = "generate", value_enum)]
+    generator: Option<Shell>,
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, PartialEq)]
 struct NameArgs {
     /// Markdown source file or a name of a presentation series
+    #[arg(short, long, value_hint = ValueHint::AnyPath)]
     name: Option<String>,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, PartialEq)]
 enum Commands {
     /// Generate .html file from an .md one
+    #[command(visible_alias = "hint")]
     Build(NameArgs),
     /// Runs a command defined in config to deploy a presentaion
     Deploy(NameArgs),
@@ -66,6 +74,14 @@ fn main() {
     //   2. `next` subcommand for the next date even if there is an occurrence
     //     today. TODO: what to do with `next` in other cases?
     //   3. Otherwise for the next date
+
+    if let Some(generator) = cli.generator {
+        let mut cmd = Cli::command();
+        eprintln!("Generating completion file for {generator:?}...");
+        print_completions(generator, &mut cmd);
+    } else {
+        println!("{cli:#?}");
+    }
 
     let source_type: SourceType;
     let source_md = match &cli.input {
@@ -106,12 +122,30 @@ fn main() {
 
     let _ = match &cli.command {
         Some(Commands::Build(_)) => presentation.build(),
-        Some(Commands::Deploy(_)) => {println!("Under consctuction..."); Ok(())},
-        Some(Commands::Edit(_)) => {presentation.edit(); Ok(())},
-        Some(Commands::Print(_)) => {println!("{}", presentation); Ok(())},
-        Some(Commands::Serve(_)) => {presentation.serve(); Ok(())},
-        Some(Commands::New) => {println!("Under consctuction..."); Ok(())},
-        None => {println!("help output should be here"); Ok(())},
+        Some(Commands::Deploy(_)) => {
+            println!("Under consctuction...");
+            Ok(())
+        }
+        Some(Commands::Edit(_)) => {
+            presentation.edit();
+            Ok(())
+        }
+        Some(Commands::Print(_)) => {
+            println!("{}", presentation);
+            Ok(())
+        }
+        Some(Commands::Serve(_)) => {
+            presentation.serve();
+            Ok(())
+        }
+        Some(Commands::New) => {
+            println!("Under consctuction...");
+            Ok(())
+        }
+        None => {
+            println!("help output should be here");
+            Ok(())
+        }
     };
 }
 
@@ -137,4 +171,8 @@ fn find_md_file() -> Option<PathBuf> {
     } else {
         return None;
     }
+}
+
+fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
+    generate(gen, cmd, cmd.get_name().to_string(), &mut io::stdout());
 }

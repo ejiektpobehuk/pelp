@@ -38,6 +38,7 @@
           inherit src;
           strictDeps = true;
 
+          nativeBuildInputs = [ pkgs.installShellFiles ];
           buildInputs = [
             # Add additional build inputs here
           ] ++ lib.optionals pkgs.stdenv.isDarwin [
@@ -117,6 +118,13 @@
           pelp-llvm-coverage = craneLibLLvmTools.cargoLlvmCov (commonArgs // {
             inherit cargoArtifacts;
           });
+          postInstall = ''
+            installShellCompletion --cmd pelp \
+              --bash <($out/bin/pelp --generate=bash) \
+              --fish <($out/bin/pelp --generate=fish) \
+              --zsh <($out/bin/pelp --generate=zsh)
+          '';
+
         };
 
         apps.default = flake-utils.lib.mkApp {
