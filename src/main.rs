@@ -12,7 +12,7 @@ use std::path::PathBuf;
 /// Automates conversion of Markdown to revealjs html.
 /// Deals with templating and files creation.
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None, name = "completion-derive")]
+#[command(version, about, long_about = None, name = "pelp")]
 struct Cli {
     /// Markdown source file
     #[arg(short, long)]
