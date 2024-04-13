@@ -54,6 +54,8 @@ enum Commands {
     Serve(NameArgs),
     /// Creates new .md file from a template
     New,
+    /// Prints pelp and build tooling versions
+    Version,
 }
 
 enum SourceType {
@@ -140,6 +142,55 @@ fn main() {
         }
         Some(Commands::New) => {
             println!("Under consctuction...");
+            Ok(())
+        }
+        Some(Commands::Version) => {
+            println!("Pelp build info:");
+            if let Some(timestamp) = option_env!("VERGEN_BUILD_TIMESTAMP") {
+                println!("\tBuild Timestamp: {timestamp}");
+            }
+            if let Some(describe) = option_env!("VERGEN_GIT_DESCRIBE") {
+                println!("\tGit describe: {describe}");
+            }
+            if let Some(sha) = option_env!("VERGEN_GIT_SHA") {
+                println!("\tGit sha: {sha}");
+            }
+            if let Some(debug) = option_env!("VERGEN_CARGO_DEBUG") {
+                println!("\tDebug enabled: {debug}");
+            }
+            if let Some(da) = option_env!("VERGEN_CARGO_FEATURES") {
+                println!("\tCargo features: {da}");
+            }
+            if let Some(da) = option_env!("VERGEN_CARGO_OPT_LEVEL") {
+                println!("\tCargo opt level: {da}");
+            }
+            if let Some(da) = option_env!("VERGEN_CARGO_TARGET_TRIPLE") {
+                println!("\tCargo target triple: {da}");
+            }
+            if let Some(da) = option_env!("VERGEN_CARGO_DEPENDENCIES") {
+                println!("\tCargo Dependencies: {da}");
+            }
+            if let Some(da) = option_env!("VERGEN_RUSTC_CHANNEL") {
+                println!("\tRustc channel: {da}");
+            }
+            if let Some(da) = option_env!("VERGEN_RUSTC_COMMIT_DATE") {
+                println!("\tRustc commit date: {da}");
+            }
+            if let Some(da) = option_env!("VERGEN_RUSTC_COMMIT_HASH") {
+                println!("\tRustc commit hash: {da}");
+            }
+            if let Some(da) = option_env!("VERGEN_RUSTC_HOST_TRIPLE") {
+                println!("\tRustc host triple: {da}");
+            }
+            if let Some(da) = option_env!("VERGEN_RUSTC_LLVM_VERSION") {
+                println!("\tLLVM version: {da}");
+            }
+            if let Some(da) = option_env!("VERGEN_RUSTC_SEMVER") {
+                println!("\tRustc semver: {da}");
+            }
+            if let Some(da) = option_env!("VERGEN_SYSINFO_OS_VERSION") {
+                println!("\tSysinfo OS Version: {da}");
+            }
             Ok(())
         }
         None => {

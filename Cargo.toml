@@ -8,7 +8,12 @@ authors = ["Vlad Petrov <oss@ejiek.id>"]
 repository = "https://github.com/ejiek/pelp"
 homepage = "https://github.com/ejiek/pelp"
 readme = "README.md"
+build = "build.rs"
 
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
 clap_complete = "4.5.2"
+
+[build-dependencies]
+anyhow = "1.0.82"
+vergen-gix = { version = "1.0.0-beta.2", features = ["build", "cargo", "rustc", "si"] }
