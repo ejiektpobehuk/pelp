@@ -1,5 +1,5 @@
 {
-  description = "A (p)resentation h(elp)er. Makes it easy to create a revealjs presentation from a Markdown file.";
+  description = "A (p)resentation h(elp)er. Makes it easy to create a revealjs presentation from a Markdown file."j
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -65,6 +65,12 @@
         # artifacts from above.
         pelp = craneLib.buildPackage (commonArgs // {
           inherit cargoArtifacts;
+          postInstall = ''
+            installShellCompletion --cmd pelp \
+              --bash <($out/bin/pelp --generate=bash) \
+              --fish <($out/bin/pelp --generate=fish) \
+              --zsh <($out/bin/pelp --generate=zsh)
+          '';
         });
       in
       {
@@ -122,12 +128,6 @@
 
         apps.default = flake-utils.lib.mkApp {
           drv = pelp;
-          postInstall = ''
-            installShellCompletion --cmd pelp \
-              --bash <($out/bin/pelp --generate=bash) \
-              --fish <($out/bin/pelp --generate=fish) \
-              --zsh <($out/bin/pelp --generate=zsh)
-          '';
         };
 
         devShells.default = craneLib.devShell {
