@@ -1,5 +1,5 @@
 {
-  description = "A (p)resentation h(elp)er. Makes it easy to create a revealjs presentation from a Markdown file."j
+  description = "A (p)resentation h(elp)er. Makes it easy to create a revealjs presentation from a Markdown file.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
