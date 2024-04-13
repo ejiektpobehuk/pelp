@@ -81,8 +81,6 @@ fn main() {
         let mut cmd = Cli::command();
         eprintln!("Generating completion file for {generator:?}...");
         print_completions(generator, &mut cmd);
-    } else {
-        println!("{cli:#?}");
     }
 
     let source_type: SourceType;
