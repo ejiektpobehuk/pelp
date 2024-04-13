@@ -1,5 +1,5 @@
 {
-  description = "Build a cargo project";
+  description = "A (p)resentation h(elp)er. Makes it easy to create a revealjs presentation from a Markdown file.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -118,17 +118,16 @@
           pelp-llvm-coverage = craneLibLLvmTools.cargoLlvmCov (commonArgs // {
             inherit cargoArtifacts;
           });
+        };
+
+        apps.default = flake-utils.lib.mkApp {
+          drv = pelp;
           postInstall = ''
             installShellCompletion --cmd pelp \
               --bash <($out/bin/pelp --generate=bash) \
               --fish <($out/bin/pelp --generate=fish) \
               --zsh <($out/bin/pelp --generate=zsh)
           '';
-
-        };
-
-        apps.default = flake-utils.lib.mkApp {
-          drv = pelp;
         };
 
         devShells.default = craneLib.devShell {
