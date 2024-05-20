@@ -30,7 +30,25 @@ Some dependencies might be removed due to functionality being implemented by pel
   - [ ] less unwrap(), more handling
 - [ ] package for the Arch User Repository
 
-# Usage as a flake
+# Install
+
+This project is in early stages of development, so I advise using the latest commit in 'main' instead of any tagged version.
+
+## Nix Flake
+
+```nix
+{
+  inputs.pelp.url = "https://gitlab.com/ejiek/pelp/main";
+
+  outputs = { self, pelp }: {
+    # Use in your outputs
+  };
+}
+
+```
+
+> [!WARNING]
+> FlakeHub version is GitHub based & GitHub repo is currently stale.
 
 [![FlakeHub](https://img.shields.io/endpoint?url=https://flakehub.com/f/ejiek/pelp/badge)](https://flakehub.com/flake/ejiek/pelp)
 
@@ -45,4 +63,12 @@ Add pelp to your `flake.nix`:
   };
 }
 
+```
+
+## Cargo
+
+Only tagged versions are available at crates.io, so they are most likely outdated.
+
+```sh
+cargo install pelp
 ```
