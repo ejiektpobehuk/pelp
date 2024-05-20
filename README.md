@@ -15,7 +15,7 @@ pelp - a **p**resentation h**elp**er. Makes it easy to create a revealjs present
 - date - to calculate the next Monday
 - sed - to replace the date in the template file
 
-Some dependencies might be removed due to functionality being implemented by pelp itselmented by pelp.
+Some dependencies might be removed due to functionality being implemented by pelp itself.
 
 ## Roadmap
 
