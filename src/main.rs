@@ -1,3 +1,4 @@
+mod new;
 mod presentation;
 use presentation::Presentation;
 
@@ -139,7 +140,7 @@ fn main() {
             Ok(())
         }
         Some(Commands::New) => {
-            println!("Under consctuction...");
+            new::create();
             Ok(())
         }
         Some(Commands::Version) => {
