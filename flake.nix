@@ -30,8 +30,15 @@
 
         inherit (pkgs) lib;
 
+        markdownFilter = path: _type: builtins.match ".*md$" path != null;
+        markdownOrCargo = path: type:
+          (markdownFilter path type) || (craneLib.filterCargoSources path type);
         craneLib = crane.lib.${system};
-        src = craneLib.cleanCargoSource (craneLib.path ./.);
+        src = lib.cleanSourceWith {
+          src = craneLib.path ./.;
+          filter = markdownOrCargo;
+        };
+
 
         # Common arguments can be set here to avoid repeating them later
         commonArgs = {
