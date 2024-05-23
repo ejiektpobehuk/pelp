@@ -9,6 +9,7 @@ repository = "https://github.com/ejiek/pelp"
 homepage = "https://github.com/ejiek/pelp"
 readme = "README.md"
 build = "build.rs"
+include = ["src/*.md"]
 
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
