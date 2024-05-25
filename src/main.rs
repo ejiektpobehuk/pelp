@@ -34,7 +34,7 @@ struct Cli {
 #[derive(Args, Debug, PartialEq)]
 struct NameArgs {
     /// Markdown source file or a name of a presentation series
-    #[arg(short, long, value_hint = ValueHint::AnyPath)]
+    #[arg(value_hint = ValueHint::AnyPath)]
     name: Option<String>,
 }
 
