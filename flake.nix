@@ -74,9 +74,9 @@
           inherit cargoArtifacts;
           postInstall = ''
             installShellCompletion --cmd pelp \
-              --bash <($out/bin/pelp --generate=bash) \
-              --fish <($out/bin/pelp --generate=fish) \
-              --zsh <($out/bin/pelp --generate=zsh)
+              --bash <($out/bin/pelp generate-completion bash) \
+              --fish <($out/bin/pelp generate-completion fish) \
+              --zsh <($out/bin/pelp generate-completion zsh)
           '';
         });
       in

@@ -24,11 +24,7 @@ struct Cli {
     output: Option<String>,
 
     #[command(subcommand)]
-    command: Option<Commands>,
-
-    // If provided, outputs the completion file for given shell
-    #[arg(long = "generate", value_enum)]
-    generator: Option<Shell>,
+    command: Commands,
 }
 
 #[derive(Args, Debug, PartialEq)]
@@ -36,6 +32,12 @@ struct NameArgs {
     /// Markdown source file or a name of a presentation series
     #[arg(value_hint = ValueHint::AnyPath)]
     name: Option<String>,
+}
+
+#[derive(Args, Debug, PartialEq)]
+struct CompletionArgs {
+    /// Available shells
+    shell: Shell,
 }
 
 #[derive(Subcommand, Debug, PartialEq)]
@@ -53,10 +55,12 @@ enum Commands {
     Print(NameArgs),
     /// Start a local web server for the presentation & monitor changes to the source .md file
     Serve(NameArgs),
-    /// Creates new .md file from a template
+    /// Creates new .md file or a project directory from a template
     New,
     /// Prints pelp and build tooling versions
     Version,
+    /// Generate a shell completion
+    GenerateCompletion(CompletionArgs),
 }
 
 enum SourceType {
@@ -77,12 +81,6 @@ fn main() {
     //   2. `next` subcommand for the next date even if there is an occurrence
     //     today. TODO: what to do with `next` in other cases?
     //   3. Otherwise for the next date
-
-    if let Some(generator) = cli.generator {
-        let mut cmd = Cli::command();
-        eprintln!("Generating completion file for {generator:?}...");
-        print_completions(generator, &mut cmd);
-    }
 
     let source_type: SourceType;
     let source_md = match &cli.input {
@@ -122,28 +120,35 @@ fn main() {
     let presentation = Presentation::new(source_md, output_html, None);
 
     let _ = match &cli.command {
-        Some(Commands::Build(_)) => presentation.build(),
-        Some(Commands::Deploy(_)) => {
+        Commands::GenerateCompletion(shell_arg) => {
+            let mut cmd = Cli::command();
+            let shell = shell_arg.shell;
+            eprintln!("Generating completion file for {shell:?}...");
+            print_completions(shell, &mut cmd);
+            Ok(())
+        }
+        Commands::Build(_) => presentation.build(),
+        Commands::Deploy(_) => {
             println!("Under consctuction...");
             Ok(())
         }
-        Some(Commands::Edit(_)) => {
+        Commands::Edit(_) => {
             presentation.edit();
             Ok(())
         }
-        Some(Commands::Print(_)) => {
+        Commands::Print(_) => {
             println!("{}", presentation);
             Ok(())
         }
-        Some(Commands::Serve(_)) => {
+        Commands::Serve(_) => {
             presentation.serve();
             Ok(())
         }
-        Some(Commands::New) => {
+        Commands::New => {
             new::create();
             Ok(())
         }
-        Some(Commands::Version) => {
+        Commands::Version => {
             println!("Pelp build info:");
             if let Some(timestamp) = option_env!("VERGEN_BUILD_TIMESTAMP") {
                 println!("\tBuild Timestamp: {timestamp}");
@@ -190,10 +195,6 @@ fn main() {
             if let Some(da) = option_env!("VERGEN_SYSINFO_OS_VERSION") {
                 println!("\tSysinfo OS Version: {da}");
             }
-            Ok(())
-        }
-        None => {
-            println!("help output should be here");
             Ok(())
         }
     };
