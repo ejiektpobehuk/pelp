@@ -74,3 +74,71 @@ Only tagged versions are available at crates.io, so they are most likely outdate
 ```sh
 cargo install pelp
 ```
+
+# Writing down ideas
+
+This part of the document doesn't represent current state of pelp software but serves as a place for me to think out loud.
+
+pelp supports three types of presentations:
+
+- Single file presentation
+- One-shot presentation project
+- Recurring presentations
+
+First version of pelp was bash script that helped to create, edit and serve a presentation for each Monday.
+It created a new presentation from a template filling out the date.
+You don't have to think about what file to use and where it is because pelp would open the correct one.
+By *correct one* I mean a file for the next Monday.
+What if it is Monday?
+Well, it's a presentation for today, so it opens presentation for today.
+
+```
+     May 2024
+Mo  Tu We Th Fr Sa Su
+        1  2  3  4  5
+ 6 [ 7  8  9 10 11 12
+13](14 15 16 17 18 19
+20){21 22 23 24 25 26
+27} 28 29 30 31
+```
+
+For new version I want to support configurable periods. 
+Weekly, Monthly. Something custom like `every 15 days` or `every second Tuesday of a month`.
+
+I would like to have multiple projects with their own configuration and easy way to choose the right one in pelp.
+
+Since it's just Markdown files and assets, git integration might be useful.
+
+## Presentation types
+
+### Single file presentations
+
+Just a Markdown file.
+Might be created from a template with `new`.
+Doesn't support being managed as a project.
+Might be stored as **recent** for easy access.
+
+Provide a path to a `.md` file to use it.
+
+### One-shot presentation project
+
+A directory with a structure to store assets near the `.md` source file.
+Might be accesses as pelp a project.
+Git integration seem somewhat reasonable.
+
+### Recurring presentations
+
+A directory with a structure to store assets and project configuration.
+
+Project configuration includes recurring period and a template.
+
+Git integration to commit, push and pull looks useful.
+
+## pelp user configuration
+
+I'd like to define on user level:
+
+- default project
+- projects list
+- default template
+- templates
