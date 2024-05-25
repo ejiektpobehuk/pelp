@@ -82,71 +82,44 @@ fn main() {
     //     today. TODO: what to do with `next` in other cases?
     //   3. Otherwise for the next date
 
-    let source_type: SourceType;
-    let source_md = match &cli.input {
-        Some(markdown_path) => {
-            source_type = SourceType::Option;
-            PathBuf::from(markdown_path)
-        }
-        None => {
-            match find_md_file() {
-                Some(file) => {
-                    source_type = SourceType::FoundInADir;
-                    file
-                }
-                None => panic!("Unable to find a .md file"), // TODO: provide an instruction
-            }
-        }
-    };
+    //let presentation = Presentation::new(source_md, output_html, None);
 
-    let output_html = match &cli.output {
-        Some(html_path) => PathBuf::from(html_path),
-        None => {
-            // change source file extension to .html
-            match source_md.extension() {
-                Some(ext) => match ext.to_str() {
-                    Some("md") => {
-                        let mut html_path = source_md.clone();
-                        html_path.set_extension("html");
-                        html_path
-                    }
-                    _ => panic!("Source file is not an .md file"),
-                },
-                None => panic!("Unable to determice an output file"), // TODO: provide an instruction
-            }
-        }
-    };
-
-    let presentation = Presentation::new(source_md, output_html, None);
-
-    let _ = match &cli.command {
+    match &cli.command {
         Commands::GenerateCompletion(shell_arg) => {
             let mut cmd = Cli::command();
             let shell = shell_arg.shell;
             eprintln!("Generating completion file for {shell:?}...");
             print_completions(shell, &mut cmd);
-            Ok(())
         }
-        Commands::Build(_) => presentation.build(),
+        Commands::Build(_) => {
+            let (source_type, source_md) = get_source(&cli.input);
+            let output_html = get_output(&cli.output, &source_md);
+            let presentation = Presentation::new(source_md, output_html, None);
+            presentation.build();
+        }
         Commands::Deploy(_) => {
             println!("Under consctuction...");
-            Ok(())
         }
         Commands::Edit(_) => {
+            let (source_type, source_md) = get_source(&cli.input);
+            let output_html = get_output(&cli.output, &source_md);
+            let presentation = Presentation::new(source_md, output_html, None);
             presentation.edit();
-            Ok(())
         }
         Commands::Print(_) => {
+            let (source_type, source_md) = get_source(&cli.input);
+            let output_html = get_output(&cli.output, &source_md);
+            let presentation = Presentation::new(source_md, output_html, None);
             println!("{}", presentation);
-            Ok(())
         }
         Commands::Serve(_) => {
+            let (source_type, source_md) = get_source(&cli.input);
+            let output_html = get_output(&cli.output, &source_md);
+            let presentation = Presentation::new(source_md, output_html, None);
             presentation.serve();
-            Ok(())
         }
         Commands::New => {
             new::create();
-            Ok(())
         }
         Commands::Version => {
             println!("Pelp build info:");
@@ -195,9 +168,40 @@ fn main() {
             if let Some(da) = option_env!("VERGEN_SYSINFO_OS_VERSION") {
                 println!("\tSysinfo OS Version: {da}");
             }
-            Ok(())
         }
-    };
+    }
+}
+
+fn get_source(input_arg: &Option<String>) -> (SourceType, PathBuf) {
+    match input_arg {
+        Some(markdown_path) => (SourceType::Option, PathBuf::from(markdown_path)),
+        None => {
+            match find_md_file() {
+                Some(file) => (SourceType::FoundInADir, file),
+                None => panic!("Unable to find a .md file"), // TODO: provide an instruction
+            }
+        }
+    }
+}
+
+fn get_output(output_arg: &Option<String>, source_md: &PathBuf) -> PathBuf {
+    match output_arg {
+        Some(html_path) => PathBuf::from(html_path),
+        None => {
+            // change source file extension to .html
+            match source_md.extension() {
+                Some(ext) => match ext.to_str() {
+                    Some("md") => {
+                        let mut html_path = source_md.clone();
+                        html_path.set_extension("html");
+                        html_path
+                    }
+                    _ => panic!("Source file is not an .md file"),
+                },
+                None => panic!("Unable to determice an output file"), // TODO: provide an instruction
+            }
+        }
+    }
 }
 
 fn find_md_file() -> Option<PathBuf> {
