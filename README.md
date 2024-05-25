@@ -21,7 +21,7 @@ Some dependencies might be removed due to functionality being implemented by pel
 
 - [ ] design & implement the `new` command
 - [x] package for nix (flake.nix & flakehub)
-- [ ] autocomplete
+- [x] minimal autocomplete
 - [ ] add support for recurring presentations
 - [ ] add support for templates (at least for recurring presentations)
 - [ ] design & implement the `deploy` command
@@ -29,6 +29,8 @@ Some dependencies might be removed due to functionality being implemented by pel
   - [ ] nice error handling
   - [ ] less unwrap(), more handling
 - [ ] package for the Arch User Repository
+
+Better autocomplete might be possible with manual labor after `pelp` stabilization or with [clap's dynamic completion](https://github.com/clap-rs/clap/issues/1232).
 
 # Install
 
