@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::PathBuf;
+use std::process;
 
 use crate::project_type::ProjectType;
 use console::style;
@@ -74,8 +75,40 @@ pub fn create(args: &CreationArgs) {
             }
         }
         ProjectType::OneShotProject => {
+            let template = include_str!("template.md");
+            let path = PathBuf::from(project_name.clone());
+            if path.exists() {
+                eprintln!("Unable to create file, it aleady exists: {}", project_name);
+                process::exit(69);
+            } else {
+                // temporary solution
+                // I don't not how to store project templates & create projects yet
+                match std::fs::create_dir(path.clone()) {
+                    Ok(_) => {
+                        let mut presentation_path = path.clone();
+                        presentation_path.push(project_name.clone());
+                        presentation_path.set_extension("md");
+
+                        create_single_file_presentation(presentation_path, template);
+                    }
+                    Err(e) => {
+                        eprintln![
+                            "Error while creating directory {}: {}",
+                            path.to_str().unwrap(),
+                            e.to_string()
+                        ];
+                        process::exit(2);
+                    }
+                }
+            }
         }
         ProjectType::RecurringProject => {
+            eprintln!(
+                "\n{}",
+                style("🚧 Recurring Projects / Presentation series are under construction 🚧")
+                    .bold()
+            );
+            process::exit(4);
         }
     };
 }
@@ -89,6 +122,9 @@ fn create_single_file_presentation(path: PathBuf, template: &str) {
             style(format!("pelp serve {}", path.to_str().unwrap())).bold(),
             style(format!("pelp edit {}", path.to_str().unwrap())).bold()
         ),
-        Err(e) => eprintln!("Error while creating file: {}", e),
+        Err(e) => {
+            eprintln!("Error while creating file: {}", e);
+            process::exit(69);
+        }
     }
 }
