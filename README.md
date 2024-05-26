@@ -189,3 +189,8 @@ Especially useful on the day of presentation when you need to prepare for the ne
 
 Maybe providing a date to find the period for the presentation is nice to have.
 If there is no presentation for that period pelp might suggest the closes one.
+
+## Presentation & Project
+
+Right now I use them interchangeably.
+Usually project means a directory with presentation(s) and assets in it.

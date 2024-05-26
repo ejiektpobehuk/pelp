@@ -1,5 +1,8 @@
-mod new;
+mod config;
+mod creation_wizard;
 mod presentation;
+mod project_type;
+
 use presentation::Presentation;
 
 use clap::{Args, Command, CommandFactory, Parser, Subcommand, ValueHint};
@@ -35,6 +38,16 @@ struct NameArgs {
 }
 
 #[derive(Args, Debug, PartialEq)]
+struct CreationArgs {
+    /// Markdown source file or a name of a presentation series
+    #[arg(value_hint = ValueHint::AnyPath)]
+    name: Option<String>,
+
+    #[arg(short = 't', long)]
+    project_type: Option<project_type::ProjectType>,
+}
+
+#[derive(Args, Debug, PartialEq)]
 struct CompletionArgs {
     /// Available shells
     shell: Shell,
@@ -56,7 +69,7 @@ enum Commands {
     /// Start a local web server for the presentation & monitor changes to the source .md file
     Serve(NameArgs),
     /// Creates new .md file or a project directory from a template
-    New,
+    New(CreationArgs),
     /// Prints pelp and build tooling versions
     Version,
     /// Generate a shell completion
@@ -83,6 +96,8 @@ fn main() {
     //   3. Otherwise for the next date
 
     //let presentation = Presentation::new(source_md, output_html, None);
+
+    config::find_user_config();
 
     match &cli.command {
         Commands::GenerateCompletion(shell_arg) => {
@@ -118,8 +133,8 @@ fn main() {
             let presentation = Presentation::new(source_md, output_html, None);
             presentation.serve();
         }
-        Commands::New => {
-            new::create();
+        Commands::New(args) => {
+            creation_wizard::create(args);
         }
         Commands::Version => {
             println!("Pelp build info:");
