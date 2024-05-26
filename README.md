@@ -134,7 +134,7 @@ Project configuration includes recurring period and a template.
 
 Git integration to commit, push and pull looks useful.
 
-## pelp user configuration
+## pelp user configuration and data
 
 I'd like to define on user level:
 
@@ -142,3 +142,50 @@ I'd like to define on user level:
 - projects list
 - default template
 - templates
+
+### User config
+
+`$XDG_CONFIG_HOME/pelp/config.toml`:
+
+```toml
+[global]
+default-template = "theme-name" # or a path
+default-interval = "weekly" # not sure what format to use here
+default-interval-border = "Monday" # not sure what format to use here
+```
+
+`$XDG_CONFIG_HOME/pelp/config.toml`:
+
+```toml
+[example-project] # this name is used to reference the project in pelp
+path = "/home/user/presentations/example-project"
+
+[example-presentatio]
+path = "/home/user/presentations/example-presentation"
+```
+
+Inside the project directory `pelp.toml`:
+
+```toml
+[presentation]
+name = "example-presentation"
+interval = "weekly"
+interval-border = "Monday"
+template = "custom.template" # might be defined in the project directory
+```
+
+There is no format for **recent** presentations database yet.
+
+## Navigating recurring presentations
+
+By default, pelp uses the closest upcoming presentation including the day of presentation.
+
+`next` for the one after the default one.
+Especially useful on the day of presentation when you need to prepare for the next one.
+
+`~` for the previous one
+
+`list` to get all existing presentations in this project.
+
+Maybe providing a date to find the period for the presentation is nice to have.
+If there is no presentation for that period pelp might suggest the closes one.
