@@ -12,12 +12,15 @@ build = "build.rs"
 include = ["src/*.md"]
 
 [dependencies]
+chrono = { version = "0.4.38", features = ["serde"] }
 clap = { version = "4.5.4", features = ["derive"] }
 clap_complete = "4.5.2"
 console = "0.15.8"
 dialoguer = { version = "0.11.0", features = ["fuzzy-select"] }
 dirs = "5.0.1"
 enum-iterator = "2.1.0"
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.117"
 
 [build-dependencies]
 anyhow = "1.0.82"

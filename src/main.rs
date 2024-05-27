@@ -1,8 +1,12 @@
 mod config;
 mod creation_wizard;
+mod file_access_logs;
+mod finder;
 mod presentation;
 mod project_type;
 
+use file_access_logs::FileAccessLog;
+use finder::look_for_project_file;
 use presentation::Presentation;
 
 use clap::{Args, Command, CommandFactory, Parser, Subcommand, ValueHint};
@@ -18,10 +22,6 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None, name = "pelp")]
 struct Cli {
-    /// Markdown source file
-    #[arg(short, long)]
-    input: Option<String>,
-
     /// HTML output file
     #[arg(short, long)]
     output: Option<String>,
@@ -53,6 +53,12 @@ struct CompletionArgs {
     shell: Shell,
 }
 
+#[derive(Args, Debug, PartialEq)]
+struct ListArgs {
+    #[arg(short = 't', long)]
+    project_type: Option<project_type::ProjectType>,
+}
+
 #[derive(Subcommand, Debug, PartialEq)]
 enum Commands {
     /// Generate .html file from an .md one
@@ -66,6 +72,8 @@ enum Commands {
     Edit(NameArgs),
     /// Output files that are going to be used
     Print(NameArgs),
+    /// List files fond in current directory, recent presentations and recurring series
+    List(ListArgs),
     /// Start a local web server for the presentation & monitor changes to the source .md file
     Serve(NameArgs),
     /// Creates new .md file or a project directory from a template
@@ -76,24 +84,8 @@ enum Commands {
     GenerateCompletion(CompletionArgs),
 }
 
-enum SourceType {
-    Argument,    // pelp <FILENAME> or <RECURRING_SERIES>
-    Option,      // pelp --input <FILENAME>
-    ConfigFile,  // not provided in CLI
-    FoundInADir, // not provided in CLI
-}
-
 fn main() {
     let cli = Cli::parse();
-
-    // Order of looking for .md file
-    // 1. Provided as an `--input` option
-    // 2. Provided recurring series as an argument
-    // 3. Default recurring series
-    //   1. For today if there is an occurrence today
-    //   2. `next` subcommand for the next date even if there is an occurrence
-    //     today. TODO: what to do with `next` in other cases?
-    //   3. Otherwise for the next date
 
     //let presentation = Presentation::new(source_md, output_html, None);
 
@@ -106,29 +98,40 @@ fn main() {
             eprintln!("Generating completion file for {shell:?}...");
             print_completions(shell, &mut cmd);
         }
-        Commands::Build(_) => {
-            let (source_type, source_md) = get_source(&cli.input);
+        Commands::Build(args) => {
+            let source_md = get_source(&args.name);
             let output_html = get_output(&cli.output, &source_md);
             let presentation = Presentation::new(source_md, output_html, None);
             presentation.build();
         }
         Commands::Deploy(_) => {
-            println!("Under consctuction...");
+            println!("🛑 Just an idea, not even under construction... 🛑");
         }
-        Commands::Edit(_) => {
-            let (source_type, source_md) = get_source(&cli.input);
+        Commands::Edit(args) => {
+            let source_md = get_source(&args.name);
             let output_html = get_output(&cli.output, &source_md);
-            let presentation = Presentation::new(source_md, output_html, None);
+            let presentation = Presentation::new(source_md.clone(), output_html, None);
             presentation.edit();
+            let mut access_log =
+                FileAccessLog::load_from_file("/home/ejiek/.local/share/pelp/recent.db");
+            access_log.add(source_md);
+            access_log.write_to_file("/home/ejiek/.local/share/pelp/recent.db");
         }
-        Commands::Print(_) => {
-            let (source_type, source_md) = get_source(&cli.input);
+        Commands::Print(args) => {
+            let source_md = get_source(&args.name);
             let output_html = get_output(&cli.output, &source_md);
             let presentation = Presentation::new(source_md, output_html, None);
             println!("{}", presentation);
         }
-        Commands::Serve(_) => {
-            let (source_type, source_md) = get_source(&cli.input);
+        Commands::List(_args) => {
+            finder::global_search();
+            // Look for pelp.toml
+            // Look for .md files in current directory
+            // Print entries from recent db
+            // Print entries from registered projects db
+        }
+        Commands::Serve(args) => {
+            let source_md = get_source(&args.name);
             let output_html = get_output(&cli.output, &source_md);
             let presentation = Presentation::new(source_md, output_html, None);
             presentation.serve();
@@ -137,63 +140,28 @@ fn main() {
             creation_wizard::create(args);
         }
         Commands::Version => {
-            println!("Pelp build info:");
-            if let Some(timestamp) = option_env!("VERGEN_BUILD_TIMESTAMP") {
-                println!("\tBuild Timestamp: {timestamp}");
-            }
-            if let Some(describe) = option_env!("VERGEN_GIT_DESCRIBE") {
-                println!("\tGit describe: {describe}");
-            }
-            if let Some(sha) = option_env!("VERGEN_GIT_SHA") {
-                println!("\tGit sha: {sha}");
-            }
-            if let Some(debug) = option_env!("VERGEN_CARGO_DEBUG") {
-                println!("\tDebug enabled: {debug}");
-            }
-            if let Some(da) = option_env!("VERGEN_CARGO_FEATURES") {
-                println!("\tCargo features: {da}");
-            }
-            if let Some(da) = option_env!("VERGEN_CARGO_OPT_LEVEL") {
-                println!("\tCargo opt level: {da}");
-            }
-            if let Some(da) = option_env!("VERGEN_CARGO_TARGET_TRIPLE") {
-                println!("\tCargo target triple: {da}");
-            }
-            if let Some(da) = option_env!("VERGEN_CARGO_DEPENDENCIES") {
-                println!("\tCargo Dependencies: {da}");
-            }
-            if let Some(da) = option_env!("VERGEN_RUSTC_CHANNEL") {
-                println!("\tRustc channel: {da}");
-            }
-            if let Some(da) = option_env!("VERGEN_RUSTC_COMMIT_DATE") {
-                println!("\tRustc commit date: {da}");
-            }
-            if let Some(da) = option_env!("VERGEN_RUSTC_COMMIT_HASH") {
-                println!("\tRustc commit hash: {da}");
-            }
-            if let Some(da) = option_env!("VERGEN_RUSTC_HOST_TRIPLE") {
-                println!("\tRustc host triple: {da}");
-            }
-            if let Some(da) = option_env!("VERGEN_RUSTC_LLVM_VERSION") {
-                println!("\tLLVM version: {da}");
-            }
-            if let Some(da) = option_env!("VERGEN_RUSTC_SEMVER") {
-                println!("\tRustc semver: {da}");
-            }
-            if let Some(da) = option_env!("VERGEN_SYSINFO_OS_VERSION") {
-                println!("\tSysinfo OS Version: {da}");
-            }
+            print_version();
         }
     }
 }
 
-fn get_source(input_arg: &Option<String>) -> (SourceType, PathBuf) {
-    match input_arg {
-        Some(markdown_path) => (SourceType::Option, PathBuf::from(markdown_path)),
+fn get_source(name_arg: &Option<String>) -> PathBuf {
+    match name_arg {
+        Some(markdown_path) => PathBuf::from(markdown_path),
         None => {
-            match find_md_file() {
-                Some(file) => (SourceType::FoundInADir, file),
-                None => panic!("Unable to find a .md file"), // TODO: provide an instruction
+            match look_for_project_file() {
+                Some(project_file) => {
+                    // try opening file specified in a project
+                    PathBuf::from("presentation.md")
+                }
+                None => {
+                    let md_files = finder::look_for_md_files();
+                    match md_files.len() {
+                        0 => panic!("No source markdown files found"),
+                        1 => md_files.first().unwrap().clone(),
+                        _ => md_files.first().unwrap().clone(),
+                    }
+                }
             }
         }
     }
@@ -245,4 +213,53 @@ fn find_md_file() -> Option<PathBuf> {
 
 fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
     generate(gen, cmd, cmd.get_name().to_string(), &mut io::stdout());
+}
+
+fn print_version() {
+    println!("Pelp build info:");
+    if let Some(timestamp) = option_env!("VERGEN_BUILD_TIMESTAMP") {
+        println!("\tBuild Timestamp: {timestamp}");
+    }
+    if let Some(describe) = option_env!("VERGEN_GIT_DESCRIBE") {
+        println!("\tGit describe: {describe}");
+    }
+    if let Some(sha) = option_env!("VERGEN_GIT_SHA") {
+        println!("\tGit sha: {sha}");
+    }
+    if let Some(debug) = option_env!("VERGEN_CARGO_DEBUG") {
+        println!("\tDebug enabled: {debug}");
+    }
+    if let Some(da) = option_env!("VERGEN_CARGO_FEATURES") {
+        println!("\tCargo features: {da}");
+    }
+    if let Some(da) = option_env!("VERGEN_CARGO_OPT_LEVEL") {
+        println!("\tCargo opt level: {da}");
+    }
+    if let Some(da) = option_env!("VERGEN_CARGO_TARGET_TRIPLE") {
+        println!("\tCargo target triple: {da}");
+    }
+    if let Some(da) = option_env!("VERGEN_CARGO_DEPENDENCIES") {
+        println!("\tCargo Dependencies: {da}");
+    }
+    if let Some(da) = option_env!("VERGEN_RUSTC_CHANNEL") {
+        println!("\tRustc channel: {da}");
+    }
+    if let Some(da) = option_env!("VERGEN_RUSTC_COMMIT_DATE") {
+        println!("\tRustc commit date: {da}");
+    }
+    if let Some(da) = option_env!("VERGEN_RUSTC_COMMIT_HASH") {
+        println!("\tRustc commit hash: {da}");
+    }
+    if let Some(da) = option_env!("VERGEN_RUSTC_HOST_TRIPLE") {
+        println!("\tRustc host triple: {da}");
+    }
+    if let Some(da) = option_env!("VERGEN_RUSTC_LLVM_VERSION") {
+        println!("\tLLVM version: {da}");
+    }
+    if let Some(da) = option_env!("VERGEN_RUSTC_SEMVER") {
+        println!("\tRustc semver: {da}");
+    }
+    if let Some(da) = option_env!("VERGEN_SYSINFO_OS_VERSION") {
+        println!("\tSysinfo OS Version: {da}");
+    }
 }
