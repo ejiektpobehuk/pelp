@@ -101,8 +101,9 @@ fn main() {
         Commands::Build(args) => {
             let source_md = get_source(&args.name);
             let output_html = get_output(&cli.output, &source_md);
-            let presentation = Presentation::new(source_md, output_html, None);
+            let presentation = Presentation::new(source_md.clone(), output_html, None);
             presentation.build();
+            file_access_logs::log(source_md);
         }
         Commands::Deploy(_) => {
             println!("🛑 Just an idea, not even under construction... 🛑");
@@ -112,10 +113,7 @@ fn main() {
             let output_html = get_output(&cli.output, &source_md);
             let presentation = Presentation::new(source_md.clone(), output_html, None);
             presentation.edit();
-            let mut access_log =
-                FileAccessLog::load_from_file("/home/ejiek/.local/share/pelp/recent.db");
-            access_log.add(source_md);
-            access_log.write_to_file("/home/ejiek/.local/share/pelp/recent.db");
+            file_access_logs::log(source_md);
         }
         Commands::Print(args) => {
             let source_md = get_source(&args.name);
@@ -133,11 +131,13 @@ fn main() {
         Commands::Serve(args) => {
             let source_md = get_source(&args.name);
             let output_html = get_output(&cli.output, &source_md);
-            let presentation = Presentation::new(source_md, output_html, None);
+            let presentation = Presentation::new(source_md.clone(), output_html, None);
+            file_access_logs::log(source_md);
             presentation.serve();
         }
         Commands::New(args) => {
-            creation_wizard::create(args);
+            let source_md = creation_wizard::create(args);
+            file_access_logs::log(source_md);
         }
         Commands::Version => {
             print_version();

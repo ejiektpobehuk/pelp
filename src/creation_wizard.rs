@@ -8,7 +8,7 @@ use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
 
 use crate::CreationArgs;
 
-pub fn create(args: &CreationArgs) {
+pub fn create(args: &CreationArgs) -> PathBuf {
     let project_name: String = if args.name.is_some() {
         args.name.clone().unwrap()
     } else {
@@ -66,12 +66,13 @@ pub fn create(args: &CreationArgs) {
                     .interact()
                     .unwrap()
                 {
-                    create_single_file_presentation(filepath, template);
+                    create_single_file_presentation(filepath, template)
                 } else {
                     println!("Aborting, no file was created");
+                    process::exit(3)
                 }
             } else {
-                create_single_file_presentation(filepath, template);
+                create_single_file_presentation(filepath, template)
             }
         }
         ProjectType::OneShotProject => {
@@ -89,7 +90,7 @@ pub fn create(args: &CreationArgs) {
                         presentation_path.push(project_name.clone());
                         presentation_path.set_extension("md");
 
-                        create_single_file_presentation(presentation_path, template);
+                        create_single_file_presentation(presentation_path, template)
                     }
                     Err(e) => {
                         eprintln![
@@ -110,18 +111,21 @@ pub fn create(args: &CreationArgs) {
             );
             process::exit(4);
         }
-    };
+    }
 }
 
-fn create_single_file_presentation(path: PathBuf, template: &str) {
+fn create_single_file_presentation(path: PathBuf, template: &str) -> PathBuf {
     match fs::write(path.clone(), template) {
-        Ok(_) => println!(
-            "\nPresentation created 🎉\n\n\
+        Ok(_) => {
+            println!(
+                "\nPresentation created 🎉\n\n\
             {} to open it in a browser\n\
             {} to open in your editor",
-            style(format!("pelp serve {}", path.to_str().unwrap())).bold(),
-            style(format!("pelp edit {}", path.to_str().unwrap())).bold()
-        ),
+                style(format!("pelp serve {}", path.to_str().unwrap())).bold(),
+                style(format!("pelp edit {}", path.to_str().unwrap())).bold()
+            );
+            path.clone()
+        }
         Err(e) => {
             eprintln!("Error while creating file: {}", e);
             process::exit(69);
