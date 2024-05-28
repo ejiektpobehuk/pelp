@@ -4,6 +4,7 @@ mod file_access_logs;
 mod finder;
 mod presentation;
 mod project_type;
+mod serve;
 
 use file_access_logs::FileAccessLog;
 use finder::look_for_project_file;
@@ -102,7 +103,7 @@ fn main() {
             let source_md = get_source(&args.name);
             let output_html = get_output(&cli.output, &source_md);
             let presentation = Presentation::new(source_md.clone(), output_html, None);
-            presentation.build();
+            presentation.embed_build();
             file_access_logs::log(source_md);
         }
         Commands::Deploy(_) => {
@@ -165,6 +166,8 @@ fn get_source(name_arg: &Option<String>) -> PathBuf {
             }
         }
     }
+    .canonicalize()
+    .unwrap()
 }
 
 fn get_output(output_arg: &Option<String>, source_md: &PathBuf) -> PathBuf {

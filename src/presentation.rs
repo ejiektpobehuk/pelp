@@ -3,9 +3,11 @@ use std::fmt;
 use std::path::PathBuf;
 use std::process::Command;
 
+use crate::serve;
+
 pub struct Presentation {
     source_md: PathBuf,
-    target_html: PathBuf,
+    output_html: PathBuf,
     base_dir: Option<PathBuf>,
 }
 
@@ -17,12 +19,12 @@ impl Presentation {
     ) -> Presentation {
         Presentation {
             source_md,
-            target_html,
+            output_html: target_html,
             base_dir,
         }
     }
 
-    pub fn build(&self) -> Result<(), std::io::Error> {
+    fn build(&self, embed: bool) -> Result<(), std::io::Error> {
         let _ = match &self.base_dir {
             Some(dir_path) => env::set_current_dir(dir_path),
             None => Ok(()),
@@ -33,21 +35,22 @@ impl Presentation {
             .output()
             .expect("Failed to run pandoc");
 
-        let build = Command::new("pandoc")
-            .arg("--to=revealjs")
-            .arg("--slide-level=2")
-            //.arg("--css=um.css")
-            .arg("--embed-resources")
+        let mut build = Command::new("pandoc");
+        build.arg("--to=revealjs").arg("--slide-level=2");
+        //.arg("--css=um.css")
+        if embed {
+            build.arg("--embed-resources");
+        };
+        build
             .arg("--standalone")
-            .arg(format!("--output={}", &self.target_html.display()))
-            .arg(&self.source_md)
-            .output()
-            .expect("Failed to build");
+            .arg(format!("--output={}", &self.output_html.display()))
+            .arg(&self.source_md);
+        let build = build.output().expect("Failed to build");
 
         if build.status.success() {
             println!(
                 "{:?} successfully build into {:?}",
-                &self.source_md, &self.target_html
+                &self.source_md, &self.output_html
             );
             Ok(())
         } else {
@@ -61,6 +64,14 @@ impl Presentation {
                 "Failed to build",
             ))
         }
+    }
+
+    pub fn embed_build(&self) -> Result<(), std::io::Error> {
+        self.build(true)
+    }
+
+    fn quick_build(&self) -> Result<(), std::io::Error> {
+        self.build(false)
     }
 
     pub fn edit(&self) {
@@ -81,21 +92,12 @@ impl Presentation {
             None => Ok(()),
         };
 
-        let _ = self.build();
+        // TODO: hash comparison might speed things up a bit
+        let _ = self.quick_build();
         println!("Successfully built");
 
-        let _live_server_check = Command::new("live-server")
-            .arg("--version")
-            .output()
-            .expect("Failed to run live-server");
-
-        let live_server = Command::new("live-server")
-            .arg(&self.target_html)
-            .spawn()
-            .expect("Failed to start live-server");
-        println!("{:?}", live_server);
-
-        // stop live-server when pelp stops
+        serve::serve(self.source_md.clone(), self.output_html.clone());
+        println!("We are past serve");
 
         let _inotifywait_check = Command::new("inotifywait")
             .arg("--help")
@@ -109,7 +111,7 @@ impl Presentation {
                 .arg(&self.source_md)
                 .output()
                 .expect("Failed to run inotifywait");
-            let _ = self.build();
+            let _ = self.quick_build();
         }
     }
 }
@@ -120,7 +122,7 @@ impl fmt::Display for Presentation {
         write!(
             f,
             "Markdown: {:?}\nHTML:     {:?}\nBase Dir: {:?}",
-            self.source_md, self.target_html, self.base_dir
+            self.source_md, self.output_html, self.base_dir
         )
     }
 }
