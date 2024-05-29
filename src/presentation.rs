@@ -97,7 +97,6 @@ impl Presentation {
         println!("Successfully built");
 
         serve::serve(self.source_md.clone(), self.output_html.clone());
-        println!("We are past serve");
 
         let _inotifywait_check = Command::new("inotifywait")
             .arg("--help")

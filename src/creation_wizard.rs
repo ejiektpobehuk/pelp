@@ -3,9 +3,9 @@ use std::path::PathBuf;
 use std::process;
 
 use crate::project_type::ProjectType;
+use chrono::{DateTime, Local};
 use console::style;
 use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
-use chrono::{DateTime, Local};
 
 use crate::CreationArgs;
 
@@ -148,5 +148,6 @@ fn fill_template(template: &str, title: &str) -> String {
     let date = Local::now().date_naive();
     template
         .replace("{{PELP_TITLE}}", title)
-        .replace("{{PELP_DATE}}", &date.to_string()).to_string()
+        .replace("{{PELP_DATE}}", &date.to_string())
+        .to_string()
 }
