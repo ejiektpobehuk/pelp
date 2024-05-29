@@ -1,5 +1,7 @@
-% Title
-% Date
+---
+title: {{PELP_TITLE}}
+date: {{PELP_DATE}}
+---
 
 # 🔆 Pelp
 

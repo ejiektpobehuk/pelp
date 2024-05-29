@@ -5,6 +5,7 @@ use std::process;
 use crate::project_type::ProjectType;
 use console::style;
 use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
+use chrono::{DateTime, Local};
 
 use crate::CreationArgs;
 
@@ -19,7 +20,12 @@ pub fn create(args: &CreationArgs) -> PathBuf {
             .unwrap()
     };
     let project_name = if project_path.contains('/') {
-        PathBuf::from(&project_path).file_name().unwrap().to_str().unwrap().to_string()
+        PathBuf::from(&project_path)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string()
         //project_path.split('/').last().unwrap().to_string()
     } else {
         project_path.clone()
@@ -72,13 +78,13 @@ pub fn create(args: &CreationArgs) -> PathBuf {
                     .interact()
                     .unwrap()
                 {
-                    create_single_file_presentation(filepath, template)
+                    create_single_file_presentation(filepath, template, &project_name)
                 } else {
                     println!("Aborting, no file was created");
                     process::exit(3)
                 }
             } else {
-                create_single_file_presentation(filepath, template)
+                create_single_file_presentation(filepath, template, &project_name)
             }
         }
         ProjectType::OneShotProject => {
@@ -90,16 +96,11 @@ pub fn create(args: &CreationArgs) -> PathBuf {
             } else {
                 // temporary solution
                 // I don't not how to store project templates & create projects yet
-                println!("Path: {:?}", &path);
                 match std::fs::create_dir(path.clone()) {
                     Ok(_) => {
-
-                        println!("project_name: {:?}", &project_name);
                         let mut presentation_path = path.join(&project_name);
                         presentation_path.set_extension("md");
-                        println!("presentation path: {:?}", &presentation_path);
-
-                        create_single_file_presentation(presentation_path, template)
+                        create_single_file_presentation(presentation_path, template, &project_name)
                     }
                     Err(e) => {
                         eprintln![
@@ -123,8 +124,9 @@ pub fn create(args: &CreationArgs) -> PathBuf {
     }
 }
 
-fn create_single_file_presentation(path: PathBuf, template: &str) -> PathBuf {
-    match fs::write(path.clone(), template) {
+fn create_single_file_presentation(path: PathBuf, template: &str, project_name: &str) -> PathBuf {
+    let presentation_source = &fill_template(&template, &project_name);
+    match fs::write(path.clone(), presentation_source) {
         Ok(_) => {
             println!(
                 "\nPresentation created 🎉\n\n\
@@ -140,4 +142,11 @@ fn create_single_file_presentation(path: PathBuf, template: &str) -> PathBuf {
             process::exit(69);
         }
     }
+}
+
+fn fill_template(template: &str, title: &str) -> String {
+    let date = Local::now().date_naive();
+    template
+        .replace("{{PELP_TITLE}}", title)
+        .replace("{{PELP_DATE}}", &date.to_string()).to_string()
 }
