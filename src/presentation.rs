@@ -3,6 +3,8 @@ use std::fmt;
 use std::path::PathBuf;
 use std::process::Command;
 
+use notify::{Error, Event, RecommendedWatcher, RecursiveMode, Watcher};
+
 use crate::serve;
 
 #[derive(Clone)]
@@ -99,19 +101,20 @@ impl Presentation {
 
         serve::serve(self.source_md.clone(), self.output_html.clone());
 
-        let _inotifywait_check = Command::new("inotifywait")
-            .arg("--help")
-            .output()
-            .expect("Failed to run inotifywait");
-
-        loop {
-            let _inotifywait = Command::new("inotifywait")
-                .arg("-e")
-                .arg("modify")
-                .arg(&self.source_md)
-                .output()
-                .expect("Failed to run inotifywait");
-            let _ = self.quick_build();
+        let (tx, rx) = std::sync::mpsc::channel();
+        let mut watcher = RecommendedWatcher::new(tx, notify::Config::default()).unwrap();
+        watcher
+            .watch(&self.source_md, RecursiveMode::NonRecursive)
+            .unwrap();
+        for res in rx {
+            match res {
+                Ok(event) => {
+                    if event.kind.is_modify() {
+                        self.quick_build();
+                    }
+                }
+                Err(error) => panic!("Unable to parse an FS event: {}", error),
+            }
         }
     }
 }

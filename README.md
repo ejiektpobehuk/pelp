@@ -10,9 +10,7 @@ pelp - a **p**resentation h**elp**er. Makes it easy to create a revealjs present
 ## Dependencies:
 
 - pandoc - to build the presentation
-- inotifywait - to watch for changes in the source file
 - date - to calculate the next Monday
-- sed - to replace the date in the template file
 
 Some dependencies might be removed due to functionality being implemented by pelp itself.
 
