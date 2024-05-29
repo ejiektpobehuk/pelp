@@ -12,10 +12,12 @@ use presentation::Presentation;
 
 use clap::{Args, Command, CommandFactory, Parser, Subcommand, ValueHint};
 use clap_complete::{generate, Generator, Shell};
+
 use std::ffi::OsStr;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
+use std::thread;
 
 /// (P)resentation h(elp)er that makes recurring presentations a breeze.
 /// Automates conversion of Markdown to revealjs html.
@@ -36,6 +38,16 @@ struct NameArgs {
     /// Markdown source file or a name of a presentation series
     #[arg(value_hint = ValueHint::AnyPath)]
     name: Option<String>,
+}
+
+#[derive(Args, Debug, PartialEq)]
+struct EditArgs {
+    /// Markdown source file or a name of a presentation series
+    #[arg(value_hint = ValueHint::AnyPath)]
+    name: Option<String>,
+    /// Serve it in the background
+    #[arg(short, long)]
+    serve: bool,
 }
 
 #[derive(Args, Debug, PartialEq)]
@@ -70,7 +82,7 @@ enum Commands {
     /// Open a Markdown source file in an editor. Useful for recurring
     /// scheduled presentations. Creates a new file if it doesn't exist for a
     /// recurring presentation
-    Edit(NameArgs),
+    Edit(EditArgs),
     /// Output files that are going to be used
     Print(NameArgs),
     /// List files fond in current directory, recent presentations and recurring series
@@ -113,6 +125,13 @@ fn main() {
             let source_md = get_source(&args.name);
             let output_html = get_output(&cli.output, &source_md);
             let presentation = Presentation::new(source_md.clone(), output_html, None);
+            let presentation_clone = presentation.clone();
+            if args.serve {
+                thread::spawn(move || {
+                    presentation_clone.serve();
+                });
+            }
+            // TODO: do something with random port cuz it's not visible in an editor
             presentation.edit();
             file_access_logs::log(source_md);
         }

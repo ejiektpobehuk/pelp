@@ -5,6 +5,7 @@ use std::process::Command;
 
 use crate::serve;
 
+#[derive(Clone)]
 pub struct Presentation {
     source_md: PathBuf,
     output_html: PathBuf,
