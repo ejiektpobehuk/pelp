@@ -9,7 +9,7 @@ use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
 use crate::CreationArgs;
 
 pub fn create(args: &CreationArgs) -> PathBuf {
-    let project_name: String = if args.name.is_some() {
+    let project_path: String = if args.name.is_some() {
         args.name.clone().unwrap()
     } else {
         // TODO: Hint to a user that using `.md` leads to a single file presentation
@@ -18,11 +18,17 @@ pub fn create(args: &CreationArgs) -> PathBuf {
             .interact_text()
             .unwrap()
     };
+    let project_name = if project_path.contains('/') {
+        PathBuf::from(&project_path).file_name().unwrap().to_str().unwrap().to_string()
+        //project_path.split('/').last().unwrap().to_string()
+    } else {
+        project_path.clone()
+    };
 
     let project_type = if args.project_type.is_some() {
         args.project_type.clone().unwrap()
     } else {
-        if project_name.ends_with(".md") {
+        if project_path.ends_with(".md") {
             println!("Single file presentation");
             ProjectType::SingleFile
         } else {
@@ -49,10 +55,10 @@ pub fn create(args: &CreationArgs) -> PathBuf {
     match project_type {
         ProjectType::SingleFile => {
             let template = include_str!("template.md");
-            let filepath = if project_name.ends_with(".md") {
-                PathBuf::from(project_name)
+            let filepath = if project_path.ends_with(".md") {
+                PathBuf::from(project_path)
             } else {
-                let mut path = PathBuf::from(project_name);
+                let mut path = PathBuf::from(project_path);
                 path.set_extension("md");
                 path
             };
@@ -77,18 +83,21 @@ pub fn create(args: &CreationArgs) -> PathBuf {
         }
         ProjectType::OneShotProject => {
             let template = include_str!("template.md");
-            let path = PathBuf::from(project_name.clone());
+            let path = PathBuf::from(project_path.clone());
             if path.exists() {
-                eprintln!("Unable to create file, it aleady exists: {}", project_name);
+                eprintln!("Unable to create file, it aleady exists: {}", project_path);
                 process::exit(69);
             } else {
                 // temporary solution
                 // I don't not how to store project templates & create projects yet
+                println!("Path: {:?}", &path);
                 match std::fs::create_dir(path.clone()) {
                     Ok(_) => {
-                        let mut presentation_path = path.clone();
-                        presentation_path.push(project_name.clone());
+
+                        println!("project_name: {:?}", &project_name);
+                        let mut presentation_path = path.join(&project_name);
                         presentation_path.set_extension("md");
+                        println!("presentation path: {:?}", &presentation_path);
 
                         create_single_file_presentation(presentation_path, template)
                     }
