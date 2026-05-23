@@ -9,7 +9,7 @@ use notify::{
     event::{AccessKind, AccessMode, EventKind, RemoveKind},
     Event, Watcher,
 };
-use rand::Rng;
+use rand::RngExt;
 use tower::layer::util::Stack;
 use tower_http::services::ServeDir;
 use tower_http::set_header::SetResponseHeaderLayer;
@@ -73,7 +73,7 @@ async fn internal_serve(source_path: PathBuf, output_path: PathBuf, addr: Option
                 Ok(listener) => (listener, addr),
                 Err(e) => {
                     eprintln!("Unable to start listening at http://{}/.\n\tError: {}\n\tTrying another port.", addr, e);
-                    let random_port = rand::thread_rng().gen_range(1025..=65535);
+                    let random_port = rand::rng().random_range(1025..=65535);
                     let addr: std::net::SocketAddr =
                         SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), random_port);
                     match tokio::net::TcpListener::bind(addr).await {

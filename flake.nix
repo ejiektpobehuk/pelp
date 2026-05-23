@@ -33,7 +33,7 @@
         markdownFilter = path: _type: builtins.match ".*md$" path != null;
         markdownOrCargo = path: type:
           (markdownFilter path type) || (craneLib.filterCargoSources path type);
-        craneLib = crane.lib.${system};
+        craneLib = crane.mkLib pkgs;
         src = lib.cleanSourceWith {
           src = craneLib.path ./.;
           filter = markdownOrCargo;
