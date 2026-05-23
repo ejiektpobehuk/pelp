@@ -9,7 +9,6 @@ use notify::{
     event::{AccessKind, AccessMode, EventKind, RemoveKind},
     Event, Watcher,
 };
-use rand::RngExt;
 use tower::layer::util::Stack;
 use tower_http::services::ServeDir;
 use tower_http::set_header::SetResponseHeaderLayer;
@@ -67,19 +66,21 @@ async fn internal_serve(source_path: PathBuf, output_path: PathBuf, addr: Option
     let (listener, addr) = match addr {
         Some(addr) => (tokio::net::TcpListener::bind(addr).await.unwrap(), addr),
         None => {
-            let addr: std::net::SocketAddr =
+            let preferred: SocketAddr =
                 SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080);
-            match tokio::net::TcpListener::bind(addr).await {
-                Ok(listener) => (listener, addr),
+            match tokio::net::TcpListener::bind(preferred).await {
+                Ok(listener) => (listener, preferred),
                 Err(e) => {
-                    eprintln!("Unable to start listening at http://{}/.\n\tError: {}\n\tTrying another port.", addr, e);
-                    let random_port = rand::rng().random_range(1025..=65535);
-                    let addr: std::net::SocketAddr =
-                        SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), random_port);
-                    match tokio::net::TcpListener::bind(addr).await {
-                        Ok(listener) => (listener, addr),
+                    eprintln!("Unable to start listening at http://{}/.\n\tError: {}\n\tFalling back to an OS-assigned port.", preferred, e);
+                    let fallback: SocketAddr =
+                        SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0);
+                    match tokio::net::TcpListener::bind(fallback).await {
+                        Ok(listener) => {
+                            let addr = listener.local_addr().unwrap_or(fallback);
+                            (listener, addr)
+                        }
                         Err(e) => {
-                            eprintln!("Unable to start listening at a random port {}.", e);
+                            eprintln!("Unable to start listening on an OS-assigned port: {}", e);
                             process::exit(13)
                         }
                     }
